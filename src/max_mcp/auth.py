@@ -73,13 +73,19 @@ async def _login_qr() -> None:
         session_name=SESSION_FILE,
         qr_provider=ConsoleQrHandler(),
     )
+    logged_in = asyncio.Event()
 
     @client.on_start()
     async def _ready(c: WebClient) -> None:
         _print_me(c)
+        logged_in.set()
         await c.stop()
 
-    await client.start()
+    try:
+        await client.start()
+    except asyncio.CancelledError:
+        if not logged_in.is_set():
+            raise
     _harden_session_file()
     _mark_session("web")
 
@@ -93,13 +99,19 @@ async def _login_sms(phone: str) -> None:
         sms_code_provider=ConsoleSmsCodeProvider(),
         password_provider=ConsolePasswordProvider(),
     )
+    logged_in = asyncio.Event()
 
     @client.on_start()
     async def _ready(c: Client) -> None:
         _print_me(c)
+        logged_in.set()
         await c.stop()
 
-    await client.start()
+    try:
+        await client.start()
+    except asyncio.CancelledError:
+        if not logged_in.is_set():
+            raise
     _harden_session_file()
     _mark_session("sms", phone=phone)
 
