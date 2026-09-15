@@ -116,6 +116,15 @@ dump_channel(channel_id=..., max_posts=1000)
 dump_channel(channel_id=..., max_posts=1000, before_time=<next_before_time>)
 ```
 
+### Бинарные поля в ответах
+
+Начиная с версии 0.1.1 поля типа `bytes` (например, бинарные превью вложений)
+возвращаются как строки URL-safe Base64 с padding. Для восстановления используйте
+`base64.urlsafe_b64decode(value)`. Правило действует и для вложенных словарей,
+списков, `stats` и `reaction_info`. Обычные строки, включая кириллицу и emoji,
+не перекодируются. Внутренние поля чата, не входящие в документированную схему,
+по-прежнему не возвращаются.
+
 ## Запись
 
 ### `send_message(chat_id, text, reply_to_id=None)`

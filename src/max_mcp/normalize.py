@@ -1,6 +1,8 @@
 from enum import Enum
 from typing import Any
 
+from pydantic_core import to_jsonable_python
+
 
 def _dump(obj: Any) -> dict[str, Any]:
     if obj is None:
@@ -9,7 +11,9 @@ def _dump(obj: Any) -> dict[str, Any]:
         return obj
     dump = getattr(obj, "model_dump", None)
     if callable(dump):
-        dumped = dump(mode="json", exclude_none=True)
+        # PyMax models contain binary previews, including in unused chat fields.
+        # Keep bytes intact until we have selected the public response fields.
+        dumped = dump(mode="python", exclude_none=True)
         return dumped if isinstance(dumped, dict) else {}
     try:
         return vars(obj)
@@ -44,15 +48,18 @@ def chat_to_dict(chat: Any) -> dict[str, Any]:
     owner = d.get("owner_id")
     if owner is None:
         owner = _value(d, "owner", chat)
-    return {
-        "id": _value(d, "id", chat),
-        "title": _value(d, "title", chat),
-        "type": _enum_text(_value(d, "type", chat)),
-        "last_event_time": _value(d, "last_event_time", chat),
-        "participants_count": _value(d, "participants_count", chat),
-        "description": _value(d, "description", chat),
-        "owner_id": _entity_id(owner),
-    }
+    return to_jsonable_python(
+        {
+            "id": _value(d, "id", chat),
+            "title": _value(d, "title", chat),
+            "type": _enum_text(_value(d, "type", chat)),
+            "last_event_time": _value(d, "last_event_time", chat),
+            "participants_count": _value(d, "participants_count", chat),
+            "description": _value(d, "description", chat),
+            "owner_id": _entity_id(owner),
+        },
+        bytes_mode="base64",
+    )
 
 
 def attach_to_dict(att: Any) -> dict[str, Any]:
@@ -61,7 +68,7 @@ def attach_to_dict(att: Any) -> dict[str, Any]:
         return {"value": d, "_kind": type(att).__name__}
     out = dict(d)
     out.setdefault("_kind", type(att).__name__)
-    return out
+    return to_jsonable_python(out, bytes_mode="base64")
 
 
 def _reply_to_id(msg: Any, d: dict[str, Any]) -> int | None:
@@ -90,7 +97,7 @@ def message_to_dict(msg: Any) -> dict[str, Any]:
             else dict(attachment)
             for attachment in attaches
         ]
-    return out
+    return to_jsonable_python(out, bytes_mode="base64")
 
 
 def post_to_dict(msg: Any) -> dict[str, Any]:
@@ -102,4 +109,4 @@ def post_to_dict(msg: Any) -> dict[str, Any]:
         base["reaction_info"] = reaction_info
     if stats is not None:
         base["stats"] = stats
-    return base
+    return to_jsonable_python(base, bytes_mode="base64")
