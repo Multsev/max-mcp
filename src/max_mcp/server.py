@@ -1,7 +1,7 @@
 from mcp.server.fastmcp import FastMCP
 
 from .client import lifespan
-from .tools import channels, chats, messages, send
+from .tools import attachments, channels, chats, messages, send
 
 INSTRUCTIONS = (
     "Инструменты пользовательской сессии MAX. Сначала находите чат через "
@@ -16,6 +16,7 @@ chats.register(mcp)
 messages.register(mcp)
 channels.register(mcp)
 send.register(mcp)
+attachments.register(mcp)
 
 
 def main() -> None:

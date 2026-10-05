@@ -82,6 +82,7 @@ def message_to_dict(msg: Any) -> dict[str, Any]:
     d = _dump(msg)
     out = {
         "id": _value(d, "id", msg),
+        "message_id": str(_value(d, "id", msg)),
         "chat_id": _value(d, "chat_id", msg),
         "sender": _entity_id(_value(d, "sender", msg)),
         "text": _value(d, "text", msg),
